@@ -8,4 +8,11 @@ internal_agent_names:
   - KodeKoot
   - Shayba
   - Halakukhan
-  - Eldunari
+
+public_system_terms:
+  # Decision record: architecture decision D3.1 of the protean-context lock (2026-09-22).
+  # Public system terms, not internal agent names. Scoping: Eldunari means one
+  # named knowledge tree inside an Eldunarya, never a person, agent, or profile.
+  - eldunari
+  - eldunarya
+  - arif
