@@ -1,0 +1,29 @@
+# spawn-contract — machine-checkable per-stage dispatch contract
+# Format spec + rules: choreography/subagent-fleet-runbook.md §2
+# Validate: python3 build/check-spawn-contract.py <this-file-as-filled>  # repo path
+# Validate: python3 contracts/check-spawn-contract.py <this-file-as-filled>  # kit path
+#
+# {TOKENS} are substituted before dispatch; a contract with any required
+# field empty or TBD must NOT be dispatched (refuse-to-spawn rule).
+# resume_from is a durable artifact path, never context memory.
+
+contract_version: 1
+role_id: ...                     # e.g. RESEARCHER-001; required, non-empty
+entry_gate: ...                  # required; prior gate green, e.g. build-passed
+deliverable_path: ...            # required; repo-relative, never absolute
+verification_bar: ...            # required; exact command the verifier will run
+restart_budget: ...              # required, e.g. 3/5min
+timeout: ...                     # required, e.g. 10m
+resume_from: ...                 # required; durable artifact path
+stability: ...                   # required; STABLE | DRAFT
+
+handoff_brief:                   # required mapping
+  context: ...                   # what the worker needs to know
+  locked_decisions:              # list of decided items (may be empty: [])
+    - ...
+  assumptions:                   # list (may be empty: [])
+    - ...
+  done: []                       # verifiable artifacts only (may be empty)
+  next: ...                      # required; next step
+  open:                          # open questions (may be empty: [])
+    - ...

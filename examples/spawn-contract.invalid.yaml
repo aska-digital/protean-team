@@ -1,0 +1,22 @@
+# spawn-contract.invalid.yaml — an INTENTIONALLY INVALID spawn contract example.
+# Must FAIL validation: python3 build/check-spawn-contract.py \
+#   examples/spawn-contract.invalid.yaml   -> exit 1
+# Deliberate violations (the two the checker's contract promises to catch):
+#   1. required field 'resume_from' carries TBD -> refuse-to-spawn
+#   2. 'stability' carries an illegal enum value ('FINAL' is not STABLE/DRAFT)
+contract_version: 1
+role_id: RESEARCHER-001
+entry_gate: build-passed
+deliverable_path: reports/summary.md
+verification_bar: python3 tools/render.py --check
+restart_budget: 3/5min
+timeout: 10m
+resume_from: TBD
+stability: FINAL
+handoff_brief:
+  context: summarize the build output for review
+  locked_decisions: []
+  assumptions: []
+  done: []
+  next: draft the summary section
+  open: []

@@ -138,7 +138,8 @@ as part of the fresh-clone test. Run `bash scripts/fresh-clone-test.sh` to
 clone HEAD to a temp dir and verify (1) frozen artifacts are present, (2) live
 artifacts are absent, (3) the demo reproduces, (4) the audit is honest, and
 (5) all contract validators pass their self-tests. The aggregator script
-`build/check-contracts.py` runs the artifact-contract, preflight, and report
+`build/check-contracts.py` runs the artifact-contract, spawn-contract,
+preflight, and report
 validators in sequence; it is stdlib-only, requires no network or credentials,
 and fails closed on errors.
 
