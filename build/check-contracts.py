@@ -21,6 +21,8 @@ def main():
     steps = [
         ("build/check-artifact-contract.py --self-test", "artifact-contract validator"),
         ("build/check-artifact-contract.py --example-check", "artifact-contract examples"),
+        ("build/check-spawn-contract.py --self-test", "spawn-contract validator"),
+        ("build/check-spawn-contract.py --example-check", "spawn-contract examples"),
         ("build/preflight/check.py --selftest", "preflight validator"),
         ("build/report/check.py --selftest", "report validator"),
     ]

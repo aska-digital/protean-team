@@ -75,6 +75,25 @@ if ! grep -q "Northwind Advisory" "$OUT/personas/SOUL.md.tmpl"; then
   exit 1
 fi
 echo "  team instantiated (Northwind Advisory in persona) ✓"
+# Subagent-fleet runbook capability ships in the generated kit?
+for f in contracts/spawn-contract.md.tmpl contracts/subagent-fleet-runbook.md \
+         contracts/check-spawn-contract.py \
+         contracts/examples/spawn-contract.valid.yaml \
+         contracts/examples/spawn-contract.invalid.yaml; do
+  if [ ! -f "$OUT/$f" ]; then
+    echo "  FAIL: generated kit missing $f"
+    exit 1
+  fi
+done
+echo "  fleet runbook capability ships in kit ✓"
+# The shipped spawn checker runs inside the generated kit (portability)?
+python3 "$OUT/contracts/check-spawn-contract.py" \
+  "$OUT/contracts/examples/spawn-contract.valid.yaml" > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "  FAIL: shipped spawn checker rejects the shipped valid example"
+  exit 1
+fi
+echo "  shipped spawn checker validates shipped example ✓"
 
 echo "[5/5] Running contract-validator self-tests (working tree validation)..."
 # The aggregator runs from $REPO (working tree) while steps 1-4 operate on $WORK/clone.

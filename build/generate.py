@@ -371,6 +371,22 @@ def main():
          "contracts/examples/artifact-contract.valid.yaml", False),
         ("examples/artifact-contract.invalid.yaml",
          "contracts/examples/artifact-contract.invalid.yaml", False),
+        # Subagent-fleet runbook capability (choreography/subagent-fleet-runbook.md):
+        # spawn-contract template + dependency-free checker + valid/invalid
+        # examples, authored fresh as generic open-core content — no extraction
+        # row by design (same rationale as the artifact-contract block above).
+        # The runbook ships verbatim (no substitution: its {TOKENS} are
+        # procedure placeholders, not kit parameters).
+        ("templates/contracts/spawn-contract.md.tmpl",
+         "contracts/spawn-contract.md.tmpl", True),
+        ("choreography/subagent-fleet-runbook.md",
+         "contracts/subagent-fleet-runbook.md", False),
+        ("build/check-spawn-contract.py",
+         "contracts/check-spawn-contract.py", False),
+        ("examples/spawn-contract.valid.yaml",
+         "contracts/examples/spawn-contract.valid.yaml", False),
+        ("examples/spawn-contract.invalid.yaml",
+         "contracts/examples/spawn-contract.invalid.yaml", False),
     ]
     for src_rel, dst_rel, do_sub in GENERIC_SHIP:
         src = os.path.join(ROOT, src_rel)

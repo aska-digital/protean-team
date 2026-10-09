@@ -221,6 +221,18 @@ next action but is **NOT yet drafted**. Treat that formal spec as **proposed /
 pending** until a dated spec record exists. Do not present it as completed
 doctrine.
 
+**Portable counterpart.** The generic, infrastructure-neutral procedure for
+spawning, tracking, steering (via re-dispatch), verifying, and recovering
+subagent work — with a machine-checkable spawn contract and a
+dependency-free checker — lives in
+`choreography/subagent-fleet-runbook.md`
+(`templates/contracts/spawn-contract.md.tmpl`,
+`build/check-spawn-contract.py`). That runbook is the replicable unit for
+a fresh clone; it documents poll-the-durable-artifact as the return path
+and flags local-only capabilities (live steer/stop, event streams, lease
+files) wherever they differ. This section's native practice remains the
+private local implementation, not the portable procedure.
+
 ## 10. Served-truth and deployment verification
 
 - **Verify the thing that is actually served/live**, not a local claim. Real

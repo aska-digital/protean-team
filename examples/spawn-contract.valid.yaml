@@ -1,0 +1,23 @@
+# spawn-contract.valid.yaml — a COMPLETE, VALID spawn contract example.
+# Check: python3 build/check-spawn-contract.py examples/spawn-contract.valid.yaml
+# All names are generic (Northwind Advisory is this repo's existing fictional
+# demo organization - see examples/demo-consulting.yaml).
+contract_version: 1
+role_id: RESEARCHER-001
+entry_gate: build-passed
+deliverable_path: reports/summary.md
+verification_bar: python3 tools/render.py --check
+restart_budget: 3/5min
+timeout: 10m
+resume_from: reports/summary.md
+stability: DRAFT
+handoff_brief:
+  context: summarize the build output for review
+  locked_decisions:
+    - scope is the staged copy only
+  assumptions:
+    - build log is complete
+  done: []
+  next: draft the summary section
+  open:
+    - who signs the summary?
