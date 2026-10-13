@@ -6,6 +6,7 @@ Uses only stdlib and matches repository conventions. Runs from a fresh clone.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -61,19 +62,58 @@ class TestVerifyAll(unittest.TestCase):
         # Should not raise SyntaxError
         compile(source, path, "exec")
 
-    def test_script_runs_with_help(self):
-        """verify-all.py should run (at least parse arguments)."""
-        path = os.path.join(BUILD, "verify-all.py")
-        # Run and check exit code (even if gates fail)
-        result = subprocess.run(
-            [sys.executable, path],
-            capture_output=True,
-            text=True,
-            cwd=ROOT,
-            timeout=120
-        )
-        # Should start the gates (not crash immediately)
-        self.assertIn("PROTEAN KIT RELEASE GATE RUNNER", result.stdout)
+    def test_all_required_release_gates_pass(self):
+        """Exercise actual gates from a committed, self-contained snapshot."""
+        required = [
+            "sweep-gate.py", "review-gate.py", "surface-scan.py",
+            "check-artifact-contract self-test", "preflight/check self-test",
+            "report/check self-test", "check-contracts aggregate",
+            "fresh-clone fork-dryrun", "check-unique-headings",
+            "check-internal-names", "review-repair self-test",
+            "review-repair fixtures",
+        ]
+        # An ordinary repository avoids a worktree .git file carrying a local
+        # path. Copy candidate source files without generated instance data;
+        # keep all privacy gates enabled in the resulting snapshot.
+        files = subprocess.run(
+            ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+             "--exclude=.pytest_cache/"],
+            cwd=ROOT, capture_output=True, check=True,
+        ).stdout.decode().split("\0")
+        with tempfile.TemporaryDirectory(prefix="release-gates-", dir="/tmp") as tmp:
+            snapshot = os.path.join(tmp, "repo")
+            home = os.path.join(tmp, "home")
+            os.makedirs(snapshot)
+            os.makedirs(home)
+            env = dict(os.environ, HOME=home, GIT_CONFIG_NOSYSTEM="1",
+                       GIT_CONFIG_GLOBAL=os.devnull,
+                       GIT_AUTHOR_NAME="fixture", GIT_AUTHOR_EMAIL="fixture@example.invalid",
+                       GIT_COMMITTER_NAME="fixture", GIT_COMMITTER_EMAIL="fixture@example.invalid")
+            for name in filter(None, files):
+                source = os.path.join(ROOT, name)
+                if not os.path.isfile(source):
+                    continue
+                destination = os.path.join(snapshot, name)
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                shutil.copy2(source, destination)
+            # Force-add the copied source: tracked files may intentionally
+            # match .gitignore (for example the shipped names blocklist).
+            for args in (["init", "-b", "main"], ["add", "-f", "-A"],
+                         ["commit", "-m", "candidate fixture"],
+                         ["remote", "add", "origin", snapshot]):
+                subprocess.run(["git"] + args, cwd=snapshot, env=env,
+                               capture_output=True, check=True)
+            result = subprocess.run(
+                [sys.executable, os.path.join(snapshot, "build", "verify-all.py")],
+                capture_output=True, text=True, cwd=snapshot, env=env, timeout=300,
+            )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        executed = [line.removeprefix("STEP: ") for line in result.stdout.splitlines()
+                    if line.startswith("STEP: ")]
+        self.assertEqual(executed, required)
+        for name in required:
+            self.assertIn("✓ PASS: " + name, result.stdout)
+        self.assertIn("Failed: 0", result.stdout)
 
 
 class TestSurfaceScanEmptyIdentifiers(unittest.TestCase):
