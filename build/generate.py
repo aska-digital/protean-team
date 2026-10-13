@@ -34,7 +34,9 @@ import os
 import re
 import sys
 import shutil
+import stat
 import subprocess
+import tempfile
 
 from genericize import sanitize_path
 
@@ -245,6 +247,39 @@ def instantiate(template_rel, params):
     return text, missing
 
 
+def promote_output(candidate, out):
+    """Install a validated candidate, restoring the old output on rename failure.
+
+    The candidate is staged beside out, on the same filesystem. Replacing a populated
+    directory needs two renames, so readers can observe a short gap at out; this
+    is not an atomic directory swap or a guarantee against process termination.
+    """
+    backup = None
+    if os.path.lexists(out):
+        if os.path.islink(out) or not os.path.isdir(out):
+            raise OSError("existing output must be a directory, not a file or symlink")
+        # Keep an existing kit's sharing permissions; assembly itself happens
+        # while the candidate is writable inside its private staging parent.
+        os.chmod(candidate, stat.S_IMODE(os.stat(out).st_mode))
+        backup = tempfile.mkdtemp(prefix=f".{os.path.basename(out)}.backup-",
+                                  dir=os.path.dirname(out))
+        os.rmdir(backup)
+        os.replace(out, backup)
+    try:
+        os.replace(candidate, out)
+    except OSError:
+        if backup is not None:
+            try:
+                os.replace(backup, out)
+            except OSError as rollback_error:
+                raise OSError(
+                    f"output promotion and rollback failed; previous output retained at {backup}"
+                ) from rollback_error
+        raise
+    if backup is not None:
+        shutil.rmtree(backup)
+
+
 def main():
     args = sys.argv[1:]
     out = None
@@ -282,16 +317,25 @@ def main():
     manifest = load_manifest()
     declared = load_pack_schema(params_path)
 
+    # Build and validate away from the requested output. Any validation return
+    # or generation exception cleans the candidate and leaves last-good intact.
+    parent = os.path.dirname(out)
+    os.makedirs(parent, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=f".{os.path.basename(out)}.build-",
+                                     dir=parent) as staging:
+        # The private staging parent is mode 0700; the kit itself gets the same
+        # mkdir/umask permissions as the previous direct-output assembly path.
+        candidate = os.path.join(staging, "kit")
+        os.mkdir(candidate)
+        return assemble(candidate, out, params, params_path, manifest, declared, strict)
+
+
+def assemble(out, destination, params, params_path, manifest, declared, strict):
     # Cross-class seam provenance lines (spec section 4)
     SEAM_REASON = {
         ("SHIPPABLE", "DROP"): "instance-bound content dropped despite shippable class",
         ("REDACTABLE", "TEMPLATE"): "redactable config surface templated at instantiation",
     }
-
-    # Wipe and rebuild the output dir
-    if os.path.isdir(out):
-        shutil.rmtree(out)
-    os.makedirs(out)
 
     provenance = []
     shipped = 0
@@ -484,6 +528,9 @@ def main():
         fh.write("## Provenance notes\n\n")
         fh.write("\n".join(provenance) + "\n")
 
+    # Only a complete candidate can replace the previously published output.
+    promote_output(out, destination)
+    out = destination
     print(f"\n✓ Kit assembled at {out}")
     print(f"  shipped rows: {shipped} (files actually written; "
           f"{skipped_unsigned} unsigned KEEP-REVIEW skipped)")
