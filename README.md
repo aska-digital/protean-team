@@ -143,6 +143,13 @@ preflight, and report
 validators in sequence; it is stdlib-only, requires no network or credentials,
 and fails closed on errors.
 
+The shipped static safety inventory is `build/internal-name-blocklist.yaml`.
+It remains available to the names gate in a clean clone. Operator-supplied
+`build/identifiers.yaml` is instance configuration: it stays ignored and absent
+from clean clones, with `build/identifiers.yaml.example` providing the empty
+shape. Any missing shipped artifact or unexpected live artifact fails the
+fresh-clone test before generation starts.
+
 ## Router trust-boundary protection
 
 Model routers and relays can see plaintext requests and responses, and may sit

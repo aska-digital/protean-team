@@ -1,4 +1,4 @@
-# build/identifiers.yaml — shipped blocklist of internal agent names.
+# build/internal-name-blocklist.yaml — shipped blocklist of internal agent names.
 # Internal agent names (protean codenames) are NOT public-facing terms.
 # They should never appear in public documentation or templates.
 
