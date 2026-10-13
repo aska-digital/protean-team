@@ -12,4 +12,4 @@
 ./build/surface-scan.py: 4
 ./build/review-gate.py: 2
 ./build/freeze-review.py: 2
-./build/identifiers.yaml: 6
+./build/internal-name-blocklist.yaml: 6

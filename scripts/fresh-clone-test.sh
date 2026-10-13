@@ -40,13 +40,18 @@ for f in build/manifest.tsv build/REVIEW.md build/identifiers.yaml; do
 done
 [ $missing -eq 0 ] && echo "  all live artifacts absent ✓"
 # Confirm the FROZEN artifacts ARE present
-for f in build/manifest.frozen.tsv build/REVIEW.frozen.md templates/MANIFEST.md; do
+for f in build/manifest.frozen.tsv build/REVIEW.frozen.md templates/MANIFEST.md \
+         build/internal-name-blocklist.yaml; do
   if [ ! -f "$f" ]; then
     echo "  FAIL: $f missing from clone (frozen artifacts must be committed)"
     missing=1
   fi
 done
 [ $missing -eq 0 ] && echo "  all frozen artifacts present ✓"
+if [ $missing -ne 0 ]; then
+  echo "FAIL: fresh-clone artifact presence/absence contract"
+  exit 1
+fi
 
 echo "[3/5] Running the documented reproduce command..."
 OUT="$WORK/out"

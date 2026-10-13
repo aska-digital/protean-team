@@ -35,11 +35,17 @@ class TestCheckInternalNames(unittest.TestCase):
         """check-internal-names.py should fail on internal agent names in temp dir."""
         path = os.path.join(BUILD, "check-internal-names.py")
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Create identifiers.yaml in tmpdir for this test
+            # A shipped static blocklist works without instance identifiers.
             yaml_path = os.path.join(tmpdir, "build")
             os.makedirs(yaml_path)
-            with open(os.path.join(yaml_path, "identifiers.yaml"), "w") as f:
+            with open(os.path.join(yaml_path, "internal-name-blocklist.yaml"), "w") as f:
                 f.write("internal_agent_names:\n  - TestAgent\n")
+            with open(os.path.join(yaml_path, "internal-names-baseline.yaml"), "w") as f:
+                f.write("./build/internal-name-blocklist.yaml: 1\n")
+            clean = subprocess.run(
+                [sys.executable, path, tmpdir], capture_output=True, text=True, timeout=60,
+            )
+            self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)
             # Create a test file with internal name
             test_file = os.path.join(tmpdir, "test.md")
             with open(test_file, "w") as f:
@@ -52,6 +58,19 @@ class TestCheckInternalNames(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0,
                 f"Expected internal name to fail, got exit code {result.returncode}")
+            self.assertIn("./test.md", result.stdout)
+
+    def test_missing_static_blocklist_is_not_replaced_by_instance_identifiers(self):
+        path = os.path.join(BUILD, "check-internal-names.py")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.makedirs(os.path.join(tmpdir, "build"))
+            with open(os.path.join(tmpdir, "build", "identifiers.yaml"), "w") as f:
+                f.write("internal_agent_names:\n  - TestAgent\n")
+            result = subprocess.run(
+                [sys.executable, path, tmpdir], capture_output=True, text=True, timeout=60,
+            )
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn("No blocklist found", result.stdout)
 
 
 if __name__ == '__main__':

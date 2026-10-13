@@ -3,7 +3,8 @@
 check-internal-names.py — Gate for internal agent names in public surfaces.
 
 Scans the whole public tree for internal agent names.
-Loads blocklist from build/identifiers.yaml.
+Loads the shipped static blocklist from build/internal-name-blocklist.yaml.
+Instance-only build/identifiers.yaml is not the source for this gate.
 Reads baseline from build/internal-names-baseline.yaml.
 Fails on any hit outside the baseline or with more hits than baseline.
 
@@ -18,11 +19,11 @@ import sys
 
 SCRIPT_NAME = 'check-internal-names.py'
 BASELINE_PATH = 'build/internal-names-baseline.yaml'
-IDENTIFIERS_PATH = 'build/identifiers.yaml'
+BLOCKLIST_PATH = 'build/internal-name-blocklist.yaml'
 
 
 def load_blocklist(repo):
-    yaml_path = os.path.join(repo, IDENTIFIERS_PATH)
+    yaml_path = os.path.join(repo, BLOCKLIST_PATH)
     if not os.path.exists(yaml_path):
         return []
     try:
@@ -93,7 +94,7 @@ def main():
     
     blocklist = load_blocklist(repo)
     if not blocklist:
-        print('No blocklist found (build/identifiers.yaml missing). Gate cannot run.')
+        print('No blocklist found (build/internal-name-blocklist.yaml missing or empty). Gate cannot run.')
         return 1
     
     baseline = load_baseline(repo)
